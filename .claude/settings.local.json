@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run:*)",
+      "Bash(python gen.py:*)",
+      "Bash(python3:*)",
+      "Bash(pixlet render:*)",
+      "WebSearch",
+      "Bash(python:*)",
+      "Bash(/tmp/gen_output.txt)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

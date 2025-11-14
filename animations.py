@@ -60,22 +60,23 @@ def single_animation(system, ex, fig_size=(8, 8), hide_axes=True, filename=None)
     Returns:
         filename (string)
     """
-    fig = plt.figure(figsize=fig_size)
+    fig = plt.figure(figsize=fig_size, facecolor='black')
     ax = plt.axes(
         xlim=(system.ys[:, 1].min() * 1.2, system.ys[:, 1].max() * 1.2),
         ylim=(system.ys[:, 3].min() * 1.2, max(0.2, system.ys[:, (2, 3)].max()) * 1.2)
     )
+    ax.set_facecolor('black')
     if hide_axes:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
     ax.set_aspect('equal')
 
-    ax.plot(0, 0, 'o', ms=8, c='C0')
-    line, = ax.plot([], [], '-', lw=3, c='C0')
-    m1, = ax.plot([], [], 'o', ms=4*ex.M[0, 0], c='C1')
-    m2, = ax.plot([], [], 'o', ms=4*ex.M[1, 1], c='C2')
-    p1, = ax.plot([], [], 'o', ms=1, c='C1')
-    p2, = ax.plot([], [], 'o', ms=1, c='C2')
+    ax.plot(0, 0, 'o', ms=1, c='white')
+    line, = ax.plot([], [], '-', lw=1, c='white')
+    m1, = ax.plot([], [], 'o', ms=1, c='cyan')
+    m2, = ax.plot([], [], 'o', ms=1, c='magenta')
+    p1, = ax.plot([], [], 'o', ms=1, c='cyan')
+    p2, = ax.plot([], [], 'o', ms=1, c='magenta')
 
     fig.tight_layout()
 
@@ -93,11 +94,11 @@ def single_animation(system, ex, fig_size=(8, 8), hide_axes=True, filename=None)
             system.ys[0:i:skip, 1],
             system.ys[0:i:skip, 3])
         m1.set_data(
-            system.ys[i, 0],
-            system.ys[i, 2])
+            [system.ys[i, 0]],
+            [system.ys[i, 2]])
         m2.set_data(
-            system.ys[i, 1],
-            system.ys[i, 3])
+            [system.ys[i, 1]],
+            [system.ys[i, 3]])
         return line, p1, p2, m1, m2
 
     anim = animation.FuncAnimation(
@@ -115,11 +116,14 @@ def single_animation(system, ex, fig_size=(8, 8), hide_axes=True, filename=None)
         os.mkdir('animations')
 
     try:
-        writer = animation.AVConvWriter(fps=50, bitrate=-1, metadata=metadata)
-        anim.save('./animations/{}.mp4'.format(filename), writer=writer)
+        writer = animation.FFMpegWriter(
+            fps=50, bitrate=-1, metadata=metadata,
+            extra_args=['-vf', 'crop=in_w:in_w/2:0:(in_h-in_w/2)/2,scale=64:32', '-loop', '0']
+        )
+        anim.save('./animations/{}.webp'.format(filename), writer=writer)
     except FileNotFoundError:
-        writer = animation.FFMpegWriter(fps=50, bitrate=-1, metadata=metadata)
-        anim.save('./animations/{}.mp4'.format(filename), writer=writer)
+        writer = animation.PillowWriter(fps=50, metadata=metadata)
+        anim.save('./animations/{}.gif'.format(filename), writer=writer)
 
     return filename
 
@@ -147,24 +151,27 @@ def multi_animation(systems, ex, fig_size=(8, 8), hide_axes=True, filename=None)
     """
     ys = np.array([s.ys for s in systems])
 
-    fig = plt.figure(figsize=fig_size)
+    fig = plt.figure(figsize=fig_size, facecolor='black')
     ax = plt.axes(
         xlim=(ys[:, :, 1].min() * 1.2, ys[:, :, 1].max() * 1.2),
         ylim=(ys[:, :, 3].min() * 1.2, max(0.2, ys[:, :, (2, 3)].max()) * 1.2)
     )
+    ax.set_facecolor('black')
     if hide_axes:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
     ax.set_aspect('equal')
 
-    ax.plot(0, 0, 'o', ms=8, c='k')
+    ax.plot(0, 0, 'o', ms=8, c='white')
 
+    bright_colors = ['cyan', 'magenta', 'yellow', 'lime', 'red', 'orange']
     lines, m1s, m2s, trails = [], [], [], []
     for k in range(len(systems)):
-        lines.append(ax.plot([], [], '-', lw=3, c='C{}'.format(k))[0])
-        m1s.append(ax.plot([], [], 'o', ms=4*ex.M[0, 0], c='C{}'.format(k))[0])
-        m2s.append(ax.plot([], [], 'o', ms=4*ex.M[1, 1], c='C{}'.format(k))[0])
-        trails.append(ax.plot([], [], 'o', ms=1, c='C{}'.format(k))[0])
+        color = bright_colors[k % len(bright_colors)]
+        lines.append(ax.plot([], [], '-', lw=1, c=color)[0])
+        m1s.append(ax.plot([], [], 'o', ms=1, c=color)[0])
+        m2s.append(ax.plot([], [], 'o', ms=1, c=color)[0])
+        trails.append(ax.plot([], [], 'o', ms=1, c=color)[0])
 
     fig.tight_layout()
 
@@ -177,11 +184,11 @@ def multi_animation(systems, ex, fig_size=(8, 8), hide_axes=True, filename=None)
                 [0, ys[k, i, 0], ys[k, i, 1]],
                 [0, ys[k, i, 2], ys[k, i, 3]])
             m1s[k].set_data(
-                ys[k, i, 0],
-                ys[k, i, 2])
+                [ys[k, i, 0]],
+                [ys[k, i, 2]])
             m2s[k].set_data(
-                ys[k, i, 1],
-                ys[k, i, 3])
+                [ys[k, i, 1]],
+                [ys[k, i, 3]])
             trails[k].set_data(
                 ys[k, max(0, i-100*skip):i:skip, 1],
                 ys[k, max(0, i-100*skip):i:skip, 3])
@@ -202,11 +209,14 @@ def multi_animation(systems, ex, fig_size=(8, 8), hide_axes=True, filename=None)
         os.mkdir('animations')
 
     try:
-        writer = animation.AVConvWriter(fps=50, bitrate=-1, metadata=metadata)
-        anim.save('./animations/{}.mp4'.format(filename), writer=writer)
+        writer = animation.FFMpegWriter(
+            fps=50, bitrate=-1, metadata=metadata,
+            extra_args=['-vf', 'crop=in_w:in_w/2:0:(in_h-in_w/2)/2,scale=64:32', '-loop', '0']
+        )
+        anim.save('./animations/{}.webp'.format(filename), writer=writer)
     except FileNotFoundError:
-        writer = animation.FFMpegWriter(fps=50, bitrate=-1, metadata=metadata)
-        anim.save('./animations/{}.mp4'.format(filename), writer=writer)
+        writer = animation.PillowWriter(fps=50, metadata=metadata)
+        anim.save('./animations/{}.gif'.format(filename), writer=writer)
 
     return filename
 
