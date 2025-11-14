@@ -8,7 +8,10 @@
       "WebSearch",
       "Bash(python:*)",
       "Bash(/tmp/gen_output.txt)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(for i in 1 2 3 4 5)",
+      "Bash(do pixlet render pendulum.star)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []
