@@ -27,9 +27,9 @@ python3 api.py
 - `seed` - Random seed for reproducibility (optional)
 - `method` - Numerical method: RK4, Euler, ExplicitMidpoint, DOPRI5 (default: RK4)
 - `full=true` - Return full data including time and velocities (default: false)
-- `length1_min` - Minimum length for first pendulum arm (default: 4.0)
+- `length1_min` - Minimum length for first pendulum arm (default: 4.5)
 - `length1_max` - Maximum length for first pendulum arm (default: 6.0)
-- `length2_min` - Minimum length for second pendulum arm (default: 2.0)
+- `length2_min` - Minimum length for second pendulum arm (default: 3.5)
 - `length2_max` - Maximum length for second pendulum arm (default: 7.2)
 
 ### Custom Mode (POST Request)

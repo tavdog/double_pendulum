@@ -77,10 +77,10 @@ def generate_simulation(params):
     method_name = params.get('method', 'RK4')
     seed = params.get('seed')
 
-    # Length constraints (matching generate_pixlet.py defaults)
-    length1_min = float(params.get('length1_min', 4.0))
+    # Length constraints (adjusted for better visual results)
+    length1_min = float(params.get('length1_min', 4.5))
     length1_max = float(params.get('length1_max', 6.0))
-    length2_min = float(params.get('length2_min', 2.0))
+    length2_min = float(params.get('length2_min', 3.5))
     length2_max = float(params.get('length2_max', 7.2))
 
     # Set random seed if provided

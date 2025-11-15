@@ -13,10 +13,22 @@ API_URL = "https://wildc.net/dp/api.py"
 # Cache TTL in seconds (1 hour)
 CACHE_TTL = 15
 
-# Display constants
-ORIGIN_X = 32
-ORIGIN_Y = 13
-SCALE = 5  # Scale factor to map physics coordinates to pixels
+# Display constants (matching generate_pixlet.py)
+# Pendulum length constraints
+LENGTH_1_MAX = 6.0
+LENGTH_2_MAX = 7.2
+MAX_EXTENT = LENGTH_1_MAX + LENGTH_2_MAX  # 13.2
+
+# Screen positioning
+ORIGIN_X = 32  # Horizontally centered
+ORIGIN_Y = 11  # 35% down from top (32 * 0.35 ≈ 11)
+
+# Calculate scale to fit pendulum on screen
+# Available space: left=32px, right=32px, up=11px, down=21px
+PADDING = 2
+SCALE_X = (32.0 - PADDING) / MAX_EXTENT  # Horizontal scale ≈ 2.27
+SCALE_Y = (21.0 - PADDING) / MAX_EXTENT  # Vertical scale ≈ 1.44
+SCALE = int(SCALE_Y * 10) / 10.0  # Use smaller scale, round to 1 decimal ≈ 1.4
 
 def fetch_simulation(seed):
     """Fetch a simulation from the API and transform coordinates to pixel space."""
@@ -68,7 +80,7 @@ def main(config):
     # Determine seed for simulation
     if seed_config == "random" or seed_config == "":
         # Use current time to pick a different simulation periodically
-        seed = time.now().unix // 3600  # Changes every hour
+        seed = time.now().unix  # Changes every second
     else:
         # Use specified seed
         seed = int(seed_config)
@@ -289,7 +301,7 @@ def get_schema():
                 icon = "dice",
                 default = "random",
                 options = [
-                    schema.Option(display = "Random (changes hourly)", value = "random"),
+                    schema.Option(display = "Random (changes every second)", value = "random"),
                     schema.Option(display = "Seed #1", value = "1"),
                     schema.Option(display = "Seed #2", value = "2"),
                     schema.Option(display = "Seed #3", value = "3"),
