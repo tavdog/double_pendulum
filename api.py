@@ -78,10 +78,10 @@ def generate_simulation(params):
     seed = params.get('seed')
 
     # Length constraints (adjusted for better visual results)
-    length1_min = float(params.get('length1_min', 4.5))
-    length1_max = float(params.get('length1_max', 6.0))
+    length1_min = float(params.get('length1_min', 3.5))
+    length1_max = float(params.get('length1_max', 7.0))
     length2_min = float(params.get('length2_min', 3.5))
-    length2_max = float(params.get('length2_max', 7.2))
+    length2_max = float(params.get('length2_max', 9))
 
     # Set random seed if provided
     if seed is not None:

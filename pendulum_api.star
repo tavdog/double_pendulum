@@ -201,16 +201,6 @@ def render_frame(simulation, seed, frame_idx):
                 color = "#000",
             ),
 
-            # Display simulation seed in top left corner
-            render.Padding(
-                pad = (1, 1, 0, 0),
-                child = render.Text(
-                    content = "#" + str(seed),
-                    color = "#888",
-                    font = "tom-thumb",
-                ),
-            ),
-
             # Fixed origin point (white dot)
             render.Padding(
                 pad = (origin_x - 1, origin_y - 1, 0, 0),
