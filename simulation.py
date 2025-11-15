@@ -1,4 +1,5 @@
 import random
+import math
 
 from pendulum import Pendulum, DoublePendulum
 from RK_DAE_solver import ERK_DAE1
@@ -46,6 +47,48 @@ def create_random_example(p1_mag=4, p2_mag=6, m1_mag=5, m2_mag=5):
     p2 = Pendulum(*p2_0, u=0, v=0)
     dp = DoublePendulum(p1, p2)
     return dp
+
+
+def create_random_example_with_lengths(length1_min=4.0, length1_max=6.0,
+                                       length2_min=2.0, length2_max=7.2,
+                                       m1_mag=5, m2_mag=5):
+    """Creates a random double pendulum with specific arm length constraints.
+
+    Uses polar coordinates (length, angle) to generate initial positions,
+    ensuring the pendulum arms have controlled lengths.
+
+    Args:
+        length1_min, length1_max (float): min/max length for first pendulum arm
+        length2_min, length2_max (float): min/max length for second pendulum arm
+        m1_mag, m2_mag (float): magnitude of the highest allowed mass
+
+    Returns:
+        `DoublePendulum` class instance
+    """
+    # Generate random arm lengths
+    length1 = round(random.uniform(length1_min, length1_max), 2)
+    length2 = round(random.uniform(length2_min, length2_max), 2)
+
+    # Generate random angles
+    theta1 = random.uniform(-math.pi, math.pi)
+    theta2 = random.uniform(-math.pi, math.pi)
+
+    # Generate random masses
+    m1 = round(random.uniform(1, m1_mag + 1), 2)
+    m2 = round(random.uniform(1, m2_mag + 1), 2)
+
+    # Calculate positions from angles and lengths
+    # Note: -cos(theta) gives proper pendulum orientation (hanging down at theta=0)
+    x1 = length1 * math.sin(theta1)
+    y1 = -length1 * math.cos(theta1)
+    x2 = x1 + length2 * math.sin(theta2)
+    y2 = y1 - length2 * math.cos(theta2)
+
+    # Create pendulums with zero initial velocity
+    p1 = Pendulum(m=m1, x=x1, y=y1, u=0, v=0)
+    p2 = Pendulum(m=m2, x=x2, y=y2, u=0, v=0)
+
+    return DoublePendulum(p1, p2)
 
 
 def create_perturbations(number, ex=None, amount=1e-6):

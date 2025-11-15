@@ -26,7 +26,7 @@ from urllib.parse import parse_qs
 import os
 
 from pendulum import Pendulum, DoublePendulum
-from simulation import create_random_example, simulate
+from simulation import create_random_example, create_random_example_with_lengths, simulate
 from methods import RK4, Euler, ExplicitMidpoint, DOPRI5
 
 # Map of method names to method objects
@@ -77,6 +77,12 @@ def generate_simulation(params):
     method_name = params.get('method', 'RK4')
     seed = params.get('seed')
 
+    # Length constraints (matching generate_pixlet.py defaults)
+    length1_min = float(params.get('length1_min', 4.0))
+    length1_max = float(params.get('length1_max', 6.0))
+    length2_min = float(params.get('length2_min', 2.0))
+    length2_max = float(params.get('length2_max', 7.2))
+
     # Set random seed if provided
     if seed is not None:
         random.seed(int(seed))
@@ -86,7 +92,13 @@ def generate_simulation(params):
 
     # Create double pendulum example
     if mode == 'random':
-        example = create_random_example()
+        # Use length-based random generation for better control
+        example = create_random_example_with_lengths(
+            length1_min=length1_min,
+            length1_max=length1_max,
+            length2_min=length2_min,
+            length2_max=length2_max
+        )
         mode_info = {
             'type': 'random',
             'pendulum1': {
