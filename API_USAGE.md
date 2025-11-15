@@ -26,6 +26,7 @@ python3 api.py
 - `step_size` - Time step size (default: 0.001)
 - `seed` - Random seed for reproducibility (optional)
 - `method` - Numerical method: RK4, Euler, ExplicitMidpoint, DOPRI5 (default: RK4)
+- `full=true` - Return full data including time and velocities (default: false)
 
 ### Custom Mode (POST Request)
 
@@ -51,12 +52,14 @@ Each pendulum has:
 
 ## Response Format
 
-The API returns JSON with the following structure:
+### Default Response (Simplified)
+
+By default, the API returns just position coordinates for each trajectory point:
 
 ```json
 {
   "simulation": {
-    "type": "random" or "custom",
+    "type": "random",
     "pendulum1": {
       "m": 5.0,
       "x": 1.5,
@@ -72,6 +75,24 @@ The API returns JSON with the following structure:
     "method": "RK4",
     "num_points": 30001
   },
+  "trajectory": [
+    [1.5, -2.0, 3.0, -4.0],
+    [1.501, -2.003, 3.002, -4.005],
+    ...
+  ]
+}
+```
+
+Each trajectory point is an array: `[x1, y1, x2, y2]`
+
+### Full Response (with `full=true`)
+
+Add `full=true` to get detailed data including time and velocities:
+
+```json
+{
+  "simulation": { ... },
+  "parameters": { ... },
   "trajectory": [
     {
       "time": 0.0,
@@ -89,9 +110,7 @@ The API returns JSON with the following structure:
 }
 ```
 
-### Trajectory Data
-
-Each point in the trajectory contains:
+Full trajectory data includes:
 - `time` - Time in seconds
 - `x1`, `y1` - Position of first pendulum bob
 - `x2`, `y2` - Position of second pendulum bob

@@ -135,19 +135,32 @@ def generate_simulation(params):
 
     # Extract trajectory data
     # ys contains [x1, x2, y1, y2, u1, u2, v1, v2] for each timestep
+    # By default, return just position coordinates [x1, y1, x2, y2]
+    full_data = params.get('full', 'false').lower() == 'true'
+
     trajectory = []
     for i, y in enumerate(result.ys):
-        trajectory.append({
-            'time': float(i * step_size),
-            'x1': float(y[0]),
-            'x2': float(y[1]),
-            'y1': float(y[2]),
-            'y2': float(y[3]),
-            'u1': float(y[4]),
-            'u2': float(y[5]),
-            'v1': float(y[6]),
-            'v2': float(y[7])
-        })
+        if full_data:
+            # Full data with time and velocities
+            trajectory.append({
+                'time': float(i * step_size),
+                'x1': float(y[0]),
+                'x2': float(y[1]),
+                'y1': float(y[2]),
+                'y2': float(y[3]),
+                'u1': float(y[4]),
+                'u2': float(y[5]),
+                'v1': float(y[6]),
+                'v2': float(y[7])
+            })
+        else:
+            # Just position coordinates like in starlark file
+            trajectory.append([
+                float(y[0]),  # x1
+                float(y[2]),  # y1
+                float(y[1]),  # x2
+                float(y[3])   # y2
+            ])
 
     return {
         'simulation': mode_info,

@@ -34,7 +34,11 @@ def test_random_mode():
         data = json.loads(json_output)
         print(f"  Mode: {data['simulation']['type']}")
         print(f"  Points: {data['parameters']['num_points']}")
-        print(f"  First point: x1={data['trajectory'][0]['x1']}, y1={data['trajectory'][0]['y1']}")
+        first_point = data['trajectory'][0]
+        if isinstance(first_point, list):
+            print(f"  First point: [x1={first_point[0]}, y1={first_point[1]}, x2={first_point[2]}, y2={first_point[3]}]")
+        else:
+            print(f"  First point: x1={first_point['x1']}, y1={first_point['y1']}")
         print("  ✓ Random mode test passed\n")
         return data
     else:
@@ -82,7 +86,11 @@ def test_custom_mode():
         data = json.loads(json_output)
         print(f"  Mode: {data['simulation']['type']}")
         print(f"  Points: {data['parameters']['num_points']}")
-        print(f"  First point: x1={data['trajectory'][0]['x1']}, y1={data['trajectory'][0]['y1']}")
+        first_point = data['trajectory'][0]
+        if isinstance(first_point, list):
+            print(f"  First point: [x1={first_point[0]}, y1={first_point[1]}, x2={first_point[2]}, y2={first_point[3]}]")
+        else:
+            print(f"  First point: x1={first_point['x1']}, y1={first_point['y1']}")
         print(f"  Pendulum 1 mass: {data['simulation']['pendulum1']['m']}")
         print("  ✓ Custom mode test passed\n")
         return data

@@ -18,7 +18,9 @@
       "Bash(CONTENT_LENGTH=194 REQUEST_METHOD=\"POST\" python3:*)",
       "Bash(JSON_DATA='{\"\"mode\"\":\"\"custom\"\",\"\"pendulum1\"\":{\"\"m\"\":5,\"\"x\"\":1.5,\"\"y\"\":-2,\"\"u\"\":0,\"\"v\"\":0},\"\"pendulum2\"\":{\"\"m\"\":3,\"\"x\"\":3.0,\"\"y\"\":-4,\"\"u\"\":0,\"\"v\"\":0},\"\"duration\"\":3,\"\"step_size\"\":0.1,\"\"method\"\":\"\"RK4\"\"}' echo:*)",
       "Bash(CONTENT_LENGTH=$#JSON_DATA REQUEST_METHOD=\"POST\" python3:*)",
-      "Bash(scp:*)"
+      "Bash(scp:*)",
+      "Bash(QUERY_STRING=\"mode=random&duration=3&step_size=0.1&seed=42\" REQUEST_METHOD=\"GET\" python3:*)",
+      "Bash(QUERY_STRING=\"mode=random&duration=2&step_size=0.5&seed=42&full=true\" REQUEST_METHOD=\"GET\" python3 api.py:*)"
     ],
     "deny": [],
     "ask": []
