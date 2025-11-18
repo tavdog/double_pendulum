@@ -25,6 +25,8 @@ import random
 from urllib.parse import parse_qs
 import os
 from datetime import datetime
+import hashlib
+import re
 
 from pendulum import Pendulum, DoublePendulum
 from simulation import create_random_example, create_random_example_with_lengths, simulate
@@ -37,6 +39,27 @@ METHODS = {
     'ExplicitMidpoint': ExplicitMidpoint,
     'DOPRI5': DOPRI5
 }
+
+
+def get_next_generation_id(output_dir='generations'):
+    """Get the next generation ID by finding the highest existing ID + 1.
+
+    Args:
+        output_dir (str): Directory to check for existing generations
+
+    Returns:
+        int: Next generation ID starting from 1
+    """
+    try:
+        files = os.listdir(output_dir)
+        nums = []
+        for f in files:
+            match = re.match(r'(\d+)\.json$', f)
+            if match:
+                nums.append(int(match.group(1)))
+        return max(nums) + 1 if nums else 1
+    except FileNotFoundError:
+        return 1
 
 
 def parse_request():
@@ -179,7 +202,11 @@ def generate_simulation(params):
                 float(y[3])   # y2
             ])
 
+    # Get next generation ID
+    generation_id = get_next_generation_id()
+
     return {
+        'name': str(generation_id),
         'simulation': mode_info,
         'parameters': {
             'duration': duration,
@@ -196,7 +223,7 @@ def generate_simulation(params):
 
 
 def save_generation(result, output_dir='generations'):
-    """Save generation result to a timestamped file.
+    """Save generation result to a file using the simulation hash name.
 
     Args:
         result (dict): The simulation result to save
@@ -208,9 +235,9 @@ def save_generation(result, output_dir='generations'):
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
 
-    # Generate timestamp-based filename
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]  # Include milliseconds
-    filename = f'generation_{timestamp}.json'
+    # Use the hash name from the result
+    sim_name = result.get('name', 'unknown')
+    filename = f'{sim_name}.json'
     filepath = os.path.join(output_dir, filename)
 
     # Save to file
