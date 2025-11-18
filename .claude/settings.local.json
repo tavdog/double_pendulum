@@ -20,7 +20,8 @@
       "Bash(CONTENT_LENGTH=$#JSON_DATA REQUEST_METHOD=\"POST\" python3:*)",
       "Bash(scp:*)",
       "Bash(QUERY_STRING=\"mode=random&duration=3&step_size=0.1&seed=42\" REQUEST_METHOD=\"GET\" python3:*)",
-      "Bash(QUERY_STRING=\"mode=random&duration=2&step_size=0.5&seed=42&full=true\" REQUEST_METHOD=\"GET\" python3 api.py:*)"
+      "Bash(QUERY_STRING=\"mode=random&duration=2&step_size=0.5&seed=42&full=true\" REQUEST_METHOD=\"GET\" python3 api.py:*)",
+      "Bash(QUERY_STRING=\"mode=random&duration=2&step_size=0.1&seed=42\" REQUEST_METHOD=\"GET\" python3:*)"
     ],
     "deny": [],
     "ask": []

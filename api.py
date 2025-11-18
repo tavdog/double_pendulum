@@ -24,6 +24,7 @@ import sys
 import random
 from urllib.parse import parse_qs
 import os
+from datetime import datetime
 
 from pendulum import Pendulum, DoublePendulum
 from simulation import create_random_example, create_random_example_with_lengths, simulate
@@ -186,6 +187,31 @@ def generate_simulation(params):
     }
 
 
+def save_generation(result, output_dir='generations'):
+    """Save generation result to a timestamped file.
+
+    Args:
+        result (dict): The simulation result to save
+        output_dir (str): Directory to save files in
+
+    Returns:
+        str: Path to the saved file
+    """
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Generate timestamp-based filename
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]  # Include milliseconds
+    filename = f'generation_{timestamp}.json'
+    filepath = os.path.join(output_dir, filename)
+
+    # Save to file
+    with open(filepath, 'w') as f:
+        json.dump(result, f, indent=2)
+
+    return filepath
+
+
 def main():
     """Main CGI handler."""
     try:
@@ -194,6 +220,9 @@ def main():
 
         # Generate simulation
         result = generate_simulation(params)
+
+        # Save generation to file
+        filepath = save_generation(result)
 
         # Output JSON response
         print("Content-Type: application/json")
