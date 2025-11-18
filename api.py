@@ -151,6 +151,10 @@ def generate_simulation(params):
     # By default, return just position coordinates [x1, y1, x2, y2]
     full_data = params.get('full', 'false').lower() == 'true'
 
+    # Calculate Y bounds for display optimization
+    y_min = min(min(float(y[2]), float(y[3])) for y in result.ys)
+    y_max = max(max(float(y[2]), float(y[3])) for y in result.ys)
+
     trajectory = []
     for i, y in enumerate(result.ys):
         if full_data:
@@ -182,6 +186,10 @@ def generate_simulation(params):
             'step_size': step_size,
             'method': method_name,
             'num_points': len(trajectory)
+        },
+        'bounds': {
+            'y_min': y_min,
+            'y_max': y_max
         },
         'trajectory': trajectory
     }
