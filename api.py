@@ -24,6 +24,9 @@ import sys
 import random
 from urllib.parse import parse_qs
 import os
+from datetime import datetime
+import hashlib
+import re
 
 from pendulum import Pendulum, DoublePendulum
 from simulation import create_random_example, create_random_example_with_lengths, simulate
@@ -36,6 +39,27 @@ METHODS = {
     'ExplicitMidpoint': ExplicitMidpoint,
     'DOPRI5': DOPRI5
 }
+
+
+def get_next_generation_id(output_dir='generations'):
+    """Get the next generation ID by finding the highest existing ID + 1.
+
+    Args:
+        output_dir (str): Directory to check for existing generations
+
+    Returns:
+        int: Next generation ID starting from 1
+    """
+    try:
+        files = os.listdir(output_dir)
+        nums = []
+        for f in files:
+            match = re.match(r'(\d+)\.json$', f)
+            if match:
+                nums.append(int(match.group(1)))
+        return max(nums) + 1 if nums else 1
+    except FileNotFoundError:
+        return 1
 
 
 def parse_request():
@@ -78,10 +102,10 @@ def generate_simulation(params):
     seed = params.get('seed')
 
     # Length constraints (adjusted for better visual results)
-    length1_min = float(params.get('length1_min', 4.5))
-    length1_max = float(params.get('length1_max', 6.0))
+    length1_min = float(params.get('length1_min', 3.5))
+    length1_max = float(params.get('length1_max', 7.0))
     length2_min = float(params.get('length2_min', 3.5))
-    length2_max = float(params.get('length2_max', 7.2))
+    length2_max = float(params.get('length2_max', 9))
 
     # Set random seed if provided
     if seed is not None:
@@ -150,6 +174,10 @@ def generate_simulation(params):
     # By default, return just position coordinates [x1, y1, x2, y2]
     full_data = params.get('full', 'false').lower() == 'true'
 
+    # Calculate Y bounds for display optimization
+    y_min = min(min(float(y[2]), float(y[3])) for y in result.ys)
+    y_max = max(max(float(y[2]), float(y[3])) for y in result.ys)
+
     trajectory = []
     for i, y in enumerate(result.ys):
         if full_data:
@@ -174,7 +202,11 @@ def generate_simulation(params):
                 float(y[3])   # y2
             ])
 
+    # Get next generation ID
+    generation_id = get_next_generation_id()
+
     return {
+        'name': str(generation_id),
         'simulation': mode_info,
         'parameters': {
             'duration': duration,
@@ -182,8 +214,37 @@ def generate_simulation(params):
             'method': method_name,
             'num_points': len(trajectory)
         },
+        'bounds': {
+            'y_min': y_min,
+            'y_max': y_max
+        },
         'trajectory': trajectory
     }
+
+
+def save_generation(result, output_dir='generations'):
+    """Save generation result to a file using the simulation hash name.
+
+    Args:
+        result (dict): The simulation result to save
+        output_dir (str): Directory to save files in
+
+    Returns:
+        str: Path to the saved file
+    """
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Use the hash name from the result
+    sim_name = result.get('name', 'unknown')
+    filename = f'{sim_name}.json'
+    filepath = os.path.join(output_dir, filename)
+
+    # Save to file
+    with open(filepath, 'w') as f:
+        json.dump(result, f, indent=2)
+
+    return filepath
 
 
 def main():
@@ -194,6 +255,9 @@ def main():
 
         # Generate simulation
         result = generate_simulation(params)
+
+        # Save generation to file
+        filepath = save_generation(result)
 
         # Output JSON response
         print("Content-Type: application/json")

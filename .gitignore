@@ -9,3 +9,4 @@ animations/
 figures/
 api_key.txt
 *.ipynb
+generations/*
