@@ -203,10 +203,10 @@ def generate_simulation(params):
             ])
 
     # Get next generation ID
-    generation_id = get_next_generation_id()
+    #generation_id = get_next_generation_id()
 
     return {
-        'name': str(generation_id),
+        'name': 'ramdom', #str(generation_id),
         'simulation': mode_info,
         'parameters': {
             'duration': duration,
@@ -257,7 +257,7 @@ def main():
         result = generate_simulation(params)
 
         # Save generation to file
-        filepath = save_generation(result)
+        # filepath = save_generation(result) # skipping for now since we have over 4666 files already
 
         # Output JSON response
         print("Content-Type: application/json")
