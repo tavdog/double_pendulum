@@ -7,14 +7,12 @@ from pathlib import Path
 
 OUTPUT_DIR = Path("output")
 
-# Load dots.svg and encode as base64 for embedding
 try:
     with open("dots.svg", "rb") as f:
         DOTS_SVG_BASE64 = base64.b64encode(f.read()).decode("ascii")
 except FileNotFoundError:
     DOTS_SVG_BASE64 = ""
 
-# Get list of available generation files
 generations = []
 for f in OUTPUT_DIR.glob("*.webp"):
     if "_static" not in f.name:
@@ -82,7 +80,7 @@ html = f"""<!DOCTYPE html>
             object-fit: contain;
             display: block;
             aspect-ratio: 2 / 1;
-            background: #000;
+            background: transparent;
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
             image-rendering: crisp-edges;
@@ -92,6 +90,21 @@ html = f"""<!DOCTYPE html>
             mask-image: url('data:image/svg+xml;base64,___DOTS_SVG_BASE64___');
             mask-repeat: no-repeat;
             mask-size: contain;
+        }}
+        .pendulum-display img.layer-1 {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }}
+        .pendulum-display img.layer-2 {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            opacity: 1.0;
+            mix-blend-mode: screen;
+            filter: brightness(1.3);
         }}
         .info-bar {{
             padding: 15px 20px;
@@ -125,19 +138,12 @@ html = f"""<!DOCTYPE html>
             font-size: 14px;
             z-index: 10;
         }}
-        .progress-bar {{
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 2px;
-            background: #4a9;
-            width: 0%;
-            transition: width 0.1s linear;
-        }}
         .controls {{
             margin-top: 20px;
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
         }}
         button {{
             padding: 10px 20px;
@@ -157,22 +163,45 @@ html = f"""<!DOCTYPE html>
             opacity: 0.5;
             cursor: not-allowed;
         }}
+        button.active {{
+            background: #4a9;
+            border-color: #4a9;
+        }}
         .count {{
             margin-top: 20px;
             color: #666;
             font-size: 12px;
         }}
+        .theater-ui {{
+            text-align: center;
+            margin-bottom: 20px;
+        }}
+        body.theater-mode .theater-ui,
+        body.theater-mode .info-bar {{
+            display: none;
+        }}
     </style>
 </head>
 <body>
-    <h1>Double Pendulum Random Viewer</h1>
-    <p class="subtitle">Mouse over to loop • Mouse out to auto-advance</p>
-    
+    <div class="theater-ui">
+        <h1>Double Pendulum Random Viewer</h1>
+        <p class="subtitle">Mouse over to loop • Mouse out to auto-advance</p>
+
+        <div class="controls">
+            <button id="nextBtn">Next Random</button>
+            <button id="toggleLoopBtn">Pause Auto-Advance</button>
+            <button id="overlayBtn">Battle Mode: OFF</button>
+            <button id="theaterBtn">Theater Mode: OFF</button>
+        </div>
+
+        <p class="count">{len(generations)} generations available</p>
+    </div>
+
     <div class="viewer-container">
         <div class="pendulum-display" id="display">
             <div class="loading" id="loading">Loading...</div>
-            <img id="animation" alt="Double Pendulum Animation">
-            <div class="progress-bar" id="progress"></div>
+            <img id="layer1" class="layer-1" alt="Layer 1" style="display: none;">
+            <img id="layer2" class="layer-2" alt="Layer 2" style="display: none;">
         </div>
         <div class="info-bar">
             <div class="generation-info">
@@ -181,75 +210,68 @@ html = f"""<!DOCTYPE html>
             <div class="status" id="status">Auto-advancing...</div>
         </div>
     </div>
-    
-    <div class="controls">
-        <button id="nextBtn">Next Random</button>
-        <button id="toggleLoopBtn">Pause Auto-Advance</button>
-    </div>
-    
-    <p class="count">{len(generations)} generations available</p>
 
     <script>
         const generations = [{gen_list}];
-        
-        let currentGen = null;
+
+        let currentGen1 = null;
+        let currentGen2 = null;
         let isLooping = false;
         let isPaused = false;
-        let progressInterval = null;
         let autoAdvanceTimeout = null;
-        
+        let overlayMode = false;
+        let theaterMode = false;
+
         const display = document.getElementById('display');
-        const animationImg = document.getElementById('animation');
+        const layer1 = document.getElementById('layer1');
+        const layer2 = document.getElementById('layer2');
         const loading = document.getElementById('loading');
         const genId = document.getElementById('genId');
         const status = document.getElementById('status');
-        const progress = document.getElementById('progress');
         const nextBtn = document.getElementById('nextBtn');
         const toggleLoopBtn = document.getElementById('toggleLoopBtn');
-        
+        const overlayBtn = document.getElementById('overlayBtn');
+        const theaterBtn = document.getElementById('theaterBtn');
+
         function getRandomGeneration() {{
             const idx = Math.floor(Math.random() * generations.length);
             return generations[idx];
         }}
-        
-        function loadGeneration(gen) {{
-            currentGen = gen;
-            loading.style.display = 'block';
-            animationImg.style.display = 'none';
-            genId.textContent = gen;
+
+        function loadGeneration(gen, layer) {{
+            const img = layer === 1 ? layer1 : layer2;
             
-            const img = new Image();
-            img.onload = () => {{
-                animationImg.src = img.src;
+            if (layer === 1) {{
+                currentGen1 = gen;
+                loading.style.display = 'block';
+                layer1.style.display = 'none';
+            }} else {{
+                currentGen2 = gen;
+                layer2.style.display = 'none';
+            }}
+            
+            genId.textContent = overlayMode && currentGen2 ? `${{currentGen1}} vs ${{currentGen2}}` : currentGen1;
+            
+            const imgObj = new Image();
+            imgObj.onload = () => {{
+                img.src = imgObj.src;
                 loading.style.display = 'none';
-                animationImg.style.display = 'block';
+                
+                if (layer === 1) {{
+                    layer1.style.display = 'block';
+                }} else {{
+                    layer2.style.display = 'block';
+                }}
                 
                 if (!isPaused && !isLooping) {{
-                    startAutoAdvance(15000);  // Animation (~10s) + fade (5s)
+                    startAutoAdvance(15000);
                 }}
             }};
-            img.src = `${{gen}}.webp`;
+            imgObj.src = `${{gen}}.webp`;
         }}
-        
+
         function startAutoAdvance(duration) {{
             clearTimeout(autoAdvanceTimeout);
-            clearInterval(progressInterval);
-            
-            let elapsed = 0;
-            const interval = 100;
-            
-            progress.style.width = '0%';
-            progress.style.opacity = '1';
-            
-            progressInterval = setInterval(() => {{
-                elapsed += interval;
-                const pct = (elapsed / duration) * 100;
-                progress.style.width = `${{pct}}%`;
-                
-                if (elapsed >= duration) {{
-                    clearInterval(progressInterval);
-                }}
-            }}, interval);
             
             autoAdvanceTimeout = setTimeout(() => {{
                 if (!isLooping && !isPaused) {{
@@ -259,37 +281,43 @@ html = f"""<!DOCTYPE html>
             
             updateStatus();
         }}
-        
+
         function loadNext() {{
             let nextGen = getRandomGeneration();
-            while (nextGen === currentGen && generations.length > 1) {{
+            while (nextGen === currentGen1 && generations.length > 1) {{
                 nextGen = getRandomGeneration();
             }}
-            loadGeneration(nextGen);
+            
+            if (overlayMode) {{
+                let nextGen2 = getRandomGeneration();
+                while (nextGen2 === currentGen2 && generations.length > 1) {{
+                    nextGen2 = getRandomGeneration();
+                }}
+                loadGeneration(nextGen2, 2);
+            }}
+            
+            loadGeneration(nextGen, 1);
         }}
-        
+
         function updateStatus() {{
             if (isLooping) {{
                 status.textContent = 'Looping (mouse over)';
                 status.classList.add('looping');
-                progress.style.opacity = '0';
             }} else if (isPaused) {{
                 status.textContent = 'Paused';
                 status.classList.remove('looping');
-                progress.style.opacity = '0';
             }} else {{
                 status.textContent = 'Auto-advancing...';
                 status.classList.remove('looping');
             }}
         }}
-        
+
         display.addEventListener('mouseenter', () => {{
             isLooping = true;
             clearTimeout(autoAdvanceTimeout);
-            clearInterval(progressInterval);
             updateStatus();
         }});
-        
+
         display.addEventListener('mouseleave', () => {{
             isLooping = false;
             if (!isPaused) {{
@@ -297,26 +325,57 @@ html = f"""<!DOCTYPE html>
             }}
             updateStatus();
         }});
-        
+
         nextBtn.addEventListener('click', () => {{
             clearTimeout(autoAdvanceTimeout);
-            clearInterval(progressInterval);
             loadNext();
         }});
-        
+
         toggleLoopBtn.addEventListener('click', () => {{
             isPaused = !isPaused;
             toggleLoopBtn.textContent = isPaused ? 'Resume Auto-Advance' : 'Pause Auto-Advance';
             
             if (isPaused) {{
                 clearTimeout(autoAdvanceTimeout);
-                clearInterval(progressInterval);
             }} else if (!isLooping) {{
-                loadNext();
+                startAutoAdvance(5000);
             }}
             updateStatus();
         }});
-        
+
+        overlayBtn.addEventListener('click', () => {{
+            overlayMode = !overlayMode;
+            overlayBtn.textContent = overlayMode ? 'Battle Mode: ON' : 'Battle Mode: OFF';
+            overlayBtn.classList.toggle('active', overlayMode);
+            
+            if (overlayMode) {{
+                layer2.style.display = 'block';
+                if (!currentGen2) {{
+                    loadGeneration(getRandomGeneration(), 2);
+                }}
+            }} else {{
+                layer2.style.display = 'none';
+            }}
+            
+            genId.textContent = overlayMode ? `${{currentGen1}} vs ${{currentGen2}}` : currentGen1;
+        }});
+
+        theaterBtn.addEventListener('click', () => {{
+            theaterMode = !theaterMode;
+            document.body.classList.toggle('theater-mode', theaterMode);
+            theaterBtn.textContent = theaterMode ? 'Theater Mode: ON' : 'Theater Mode: OFF';
+            theaterBtn.classList.toggle('active', theaterMode);
+        }});
+
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'Escape' && theaterMode) {{
+                theaterMode = false;
+                document.body.classList.remove('theater-mode');
+                theaterBtn.textContent = 'Theater Mode: OFF';
+                theaterBtn.classList.remove('active');
+            }}
+        }});
+
         loadNext();
     </script>
 </body>
@@ -324,7 +383,6 @@ html = f"""<!DOCTYPE html>
 """
 
 output_path = OUTPUT_DIR / "viewer.html"
-# Replace SVG placeholder with actual base64 data
 html = html.replace("___DOTS_SVG_BASE64___", DOTS_SVG_BASE64)
 with open(output_path, "w") as f:
     f.write(html)
