@@ -264,7 +264,7 @@ html = f"""<!DOCTYPE html>
                 }}
                 
                 if (!isPaused && !isLooping) {{
-                    startAutoAdvance(15000);
+                    startAutoAdvance(14750);
                 }}
             }};
             imgObj.src = `${{gen}}.webp`;
@@ -321,7 +321,7 @@ html = f"""<!DOCTYPE html>
         display.addEventListener('mouseleave', () => {{
             isLooping = false;
             if (!isPaused) {{
-                startAutoAdvance(5000);
+                startAutoAdvance(4750);
             }}
             updateStatus();
         }});
@@ -338,7 +338,7 @@ html = f"""<!DOCTYPE html>
             if (isPaused) {{
                 clearTimeout(autoAdvanceTimeout);
             }} else if (!isLooping) {{
-                startAutoAdvance(5000);
+                startAutoAdvance(4750);
             }}
             updateStatus();
         }});
@@ -376,7 +376,28 @@ html = f"""<!DOCTYPE html>
             }}
         }});
 
-        loadNext();
+        // Parse URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const genParam = urlParams.get('gen');
+        
+        if (genParam && generations.includes(parseInt(genParam))) {{
+            // Load specific generation from URL
+            isPaused = true;
+            toggleLoopBtn.textContent = 'Resume Auto-Advance';
+            currentGen1 = parseInt(genParam);
+            genId.textContent = currentGen1;
+            layer1.style.display = 'block';
+            loading.style.display = 'block';
+            
+            const img = new Image();
+            img.onload = () => {{
+                layer1.src = img.src;
+                loading.style.display = 'none';
+            }};
+            img.src = currentGen1 + '.webp';
+        }} else {{
+            loadNext();
+        }}
     </script>
 </body>
 </html>

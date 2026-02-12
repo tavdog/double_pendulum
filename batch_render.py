@@ -204,7 +204,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         genIds.forEach(i => {{
             const card = document.createElement('div');
             card.className = 'pendulum-card';
-            card.onclick = () => window.location.href = 'viewer.html?gen=' + i + '&loop=1';
+            card.onclick = () => window.open('viewer.html?gen=' + i + '&loop=1', '_blank');
 
             const container = document.createElement('div');
             container.className = 'pendulum-container';
@@ -331,6 +331,11 @@ def render_generation(gen_file: Path) -> Tuple[str, str, str] | None:
             )
             if result.returncode != 0:
                 print(f"Error rendering {gen_id}.webp: {result.stderr}")
+                webp_file.unlink(missing_ok=True)
+                static_file.unlink(missing_ok=True)
+                bad_file = gen_file.with_suffix(".bad")
+                gen_file.rename(bad_file)
+                print(f"  Renamed {gen_file.name} -> {bad_file.name}")
                 return None
 
         # Render last frame as static WebP at native resolution (64x32)
@@ -355,6 +360,10 @@ def render_generation(gen_file: Path) -> Tuple[str, str, str] | None:
             )
             if result.returncode != 0:
                 print(f"Error rendering {gen_id}_static.webp: {result.stderr}")
+                static_file.unlink(missing_ok=True)
+                bad_file = gen_file.with_suffix(".bad")
+                gen_file.rename(bad_file)
+                print(f"  Renamed {gen_file.name} -> {bad_file.name}")
                 return None
 
         return (gen_id, f"{gen_id}_static.webp", f"{gen_id}.webp")
@@ -422,6 +431,10 @@ def main():
     html_path = OUTPUT_DIR / "index.html"
     with open(html_path, "w") as f:
         f.write(html_content)
+
+    # Generate viewer.html
+    print("Generating viewer.html...")
+    subprocess.run(["python3", "generate_viewer.py"], cwd=".")
 
     print(f"\nComplete!")
     print(f"  Output directory: {OUTPUT_DIR.absolute()}")
