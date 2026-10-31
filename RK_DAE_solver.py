@@ -94,10 +94,10 @@ class ERK_DAE1(RK_DAE):
         Y[0] = y
         for i in range(1, self.s):
             k[i-1] = self.ex.get_dy(Y[i-1])
-            Y[i] = y + self.h * np.sum(self.A[i, j] * k[j] for j in range(i))
+            Y[i] = y + self.h * sum(self.A[i, j] * k[j] for j in range(i))
 
         k[-1] = self.ex.get_dy(Y[-1])
-        new_y = y + self.h * np.sum((self.b[i] * k[i] for i in range(self.s)), axis=0)
+        new_y = y + self.h * sum(self.b[i] * k[i] for i in range(self.s))
         new_z = self.ex.get_z(new_y)
         return new_y, new_z
 
